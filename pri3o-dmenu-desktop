@@ -27,12 +27,12 @@ def init_session_data(argv):
 
 def config_base():
     """ get the base directory for config files, it uses
-    $XDG_CONFIG_HOME/pri3o_dmenu_desktop and falls back to
-    ~/.config/pri3o_dmenu_desktop """
+    $XDG_CONFIG_HOME/pri3o-dmenu-desktop and falls back to
+    ~/.config/pri3o-dmenu-desktop """
     if 'XDG_CONFIG_HOME' in os.environ:
-        _s['config_base'] = os.environ['XDG_CONFIG_HOME']+"/pri3o_dmenu_desktop"
+        _s['config_base'] = os.environ['XDG_CONFIG_HOME']+"/pri3o-dmenu-desktop"
     else:
-        _s['config_base'] = os.environ['HOME']+"/.config/pri3o_dmenu_desktop"
+        _s['config_base'] = os.environ['HOME']+"/.config/pri3o-dmenu-desktop"
 
     if not os.path.isdir(_s['config_base']):
         Path(_s['config_base']).mkdir(parents=True, exist_ok=True)
@@ -44,7 +44,7 @@ def parse_args(argv):
     for opt, arg in opts:
         # show help
         if opt == '-h':
-            print('Usage pri3o_dmenu_desktop.py [-d <db file>] [-l <locale>]')
+            print('Usage pri3o-dmenu-desktop [-d <db file>] [-l <locale>]')
             exit()
         # use custom db location
         elif opt == '-d':
