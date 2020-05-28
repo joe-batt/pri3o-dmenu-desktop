@@ -44,3 +44,19 @@ The optional commandline parameters are:
 - `-l, --locale=LOCALE` use LOCALE (e.g. `en_GB`) for localisation of "Name", default is system locale
 - `-m, --dmenu=COMMAND` run this command for dmenu, default `dmenu -i`
 - `-t, --term=COMMAND` use this command for programs that need to be run in a terminal, default `i3-sensible-terminal -e`
+
+## Speed
+As some people may wonder about how fast it is:
+```
+ % time pri3o-dmenu-desktop --dmenu=cat            
+pri3o-dmenu-desktop --dmenu=cat  0,05s user 0,01s system 99% cpu 0,054 total
+
+ % time i3-dmenu-desktop --dmenu=cat
+i3-dmenu-desktop --dmenu=cat  0,13s user 0,01s system 98% cpu 0,134 total
+
+ % time j4-dmenu-desktop --dmenu=cat
+j4-dmenu-desktop --dmenu=cat  0,09s user 0,02s system 33% cpu 0,339 total
+```
+On my system (SSD-only) it is slightly faster than even j4-dmenu-desktop, 
+maybe because I am still missing something. For all practical purposes the
+difference is negligible.
