@@ -224,7 +224,7 @@ def run_dmenu():
     # run dmenu and read choice
     p = Popen(_s["dmenu_cmd"].split(), stdout=PIPE, stdin=PIPE, stderr=PIPE)
     choice = p.communicate(input=bytearray("\n".join(applist), encoding='utf-8'))
-    return choice[0].decode()[:-1]
+    return choice[0].decode()[:-1].split("\n")[0]
 
 def update_prio(choice):
     """ update prio in db, add new entry if needed. Priority is lowered
