@@ -16,6 +16,8 @@ import sys
 from subprocess import Popen, PIPE, STDOUT
 from pathlib import Path
 
+ENTRY_TYPES = ["name", "command", "filename"]
+
 # Session Data object, short name because of lazyness/readability
 _s={}
 
@@ -23,6 +25,9 @@ def init_session_data(argv):
     config_base()
     _s['db'] = _s["config_base"]+'/dmenu.db'
     _s['locale'] = locale.LC_CTYPE
+    _s['dmenu_cmd'] = 'dmenu -i'
+    _s['entry_type'] = 'name'
+    _s['term'] = 'i3-sensible-terminal -e'
     parse_args(argv)
 
 def config_base():
@@ -37,25 +42,56 @@ def config_base():
     if not os.path.isdir(_s['config_base']):
         Path(_s['config_base']).mkdir(parents=True, exist_ok=True)
 
+def show_help():
+    print("""Usage:
+        pri3o-dmenu-desktop [OPTIONS]
+
+Options:
+       -d, --database=PATH      path to database file;
+                                default '$XDG_CONFIG_HOME/pri3o-dmenu-desktop/dmenu.db'
+       -e, --entry-type=TYPE    display "Name" (TYPE=name), "Exec" (TYPE=command)
+                                or .desktop filename (TYPE=filename) in dmenu,
+                                default 'name'
+       -h, --help               display this message
+       -l, --locale=LOCALE      use LOCALE (e.g. 'en_GB') for localisation of
+                                "Name", default is system locale
+       -m, --dmenu=COMMAND      run this command for dmenu, default 'dmenu -i'
+       -t, --term=COMMAND       use this command for programs that need to be run
+                                in a terminal, default 'i3-sensible-terminal -e'
+""")
 
 def parse_args(argv):
     """ parse given commandline arguments"""
-    opts, args = getopt.getopt(argv,"d:l:h")
+
+    opts, args = getopt.getopt(argv,"d:e:hl:m:t", ["database=", "dmenu=", 
+                               "entry-type=", "help", "locale=", "term="])
     for opt, arg in opts:
-        # show help
-        if opt == '-h':
-            print('Usage pri3o-dmenu-desktop [-d <db file>] [-l <locale>]')
+        if opt == '-h' or opt == "--help":
+            show_help()
             exit()
-        # use custom db location
-        elif opt == '-d':
-            print("d", arg)
+        elif opt == '-d' or opt == '--database':
             _s['db'] = os.path.expanduser(arg)
-        # use custom locale
-        elif opt == '-l':
+        elif opt == '-l' or opt == '--locale':
             _s['locale'] = arg
+        elif opt == '-m' or opt == '--dmenu':
+            _s['dmenu_cmd'] = arg
+        elif opt == '-t' or opt == '--term':
+            _s["term"] = arg
+        elif opt == '-e' or opt == '--entry-type':
+            if arg in ENTRY_TYPES:
+                _s["entry_type"] = arg
+            else:
+                print("ERROR: invalid entry type: {}".format(arg))
+                exit(1)
 
 def parse_exec(ex):
-    """ parse %-Flags in desktop, for now they are simply ignored """
+    """ Parse %-Flags in desktop, for now they are simply ignored, also remove
+    quotes around commands"""
+    if ex.startswith('"') and ex.endswith('"'):
+        ex = ex.strip('""')
+    elif ex.startswith("'") and ex.endswith("'"):
+        ex = ex.strip("'")
+
     # Remove deprecated flags
     ex = re.sub(r'%[dDnNvm]', '', ex)
     # for now ignore all other flags as well
@@ -150,19 +186,29 @@ def fetch_apps():
     for f in get_desktop_list():
         content = Path(f).read_text().split('\n')
         data = parse_desktop(content)
-        if data is not None:
-#        data["_location"] = f
-            # ignore Hidden and NoDisplay
-            if is_visible(data):
-                # parse name
-                name_idx = list(map(lambda x: x in data.keys(), _s['lang_keys'])).index(True)
-                name = data[_s['lang_keys'][name_idx]]
-        
-                # set prio in app data, prio needs to be lower case
-                prio = (0, name.lower())
-                if name.lower() in _s['db_info'].keys():
-                    prio = _s['db_info'][name.lower()]
-                _s['apps'][name] = {"name": name, "exec": data["Exec"], "prio": prio}
+        if data is not None and is_visible(data):
+            # parse name
+            app_info = {}
+            name_idx = list(map(lambda x: x in data.keys(), _s['lang_keys'])).index(True)
+            name = data[_s['lang_keys'][name_idx]]
+
+            app_info["name"] = name
+            app_info["command"] = parse_exec(data["Exec"])
+
+            app_info["terminal"] = False
+            if 'Terminal' in data.keys() and data["Terminal"] == "true":
+                app_info["terminal"] = True
+                
+            # basically do a basename <file> .desktop, python basename
+            # does not support a suffix and will use split anyway
+            app_info["filename"] = f.split("/")[-1].split(".")[0]
+            key = app_info[_s['entry_type']]
+    
+            # set prio in app data, prio needs to be lower case
+            app_info["prio"] = (0, key.lower())
+            if name.lower() in _s['db_info'].keys():
+                app_info["prio"] = (_s['db_info'][name.lower()][0], key.lower())
+            _s['apps'][key] = app_info
 
 def fetch_db_info():
     """ load current info from database """
@@ -176,16 +222,17 @@ def run_dmenu():
     applist.sort(key=lambda x: _s["apps"][x]["prio"])
 
     # run dmenu and read choice
-    p = Popen(["dmenu", "-i"], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    p = Popen(_s["dmenu_cmd"].split(), stdout=PIPE, stdin=PIPE, stderr=PIPE)
     choice = p.communicate(input=bytearray("\n".join(applist), encoding='utf-8'))
     return choice[0].decode()[:-1]
 
 def update_prio(choice):
     """ update prio in db, add new entry if needed. Priority is lowered
         as this helps python's natural sort order."""
-    count, app = _s["apps"][choice]["prio"]
+    count = _s["apps"][choice]["prio"][0]
+    app = _s["apps"][choice]["name"]
     count-=1
-    if choice.lower() in _s["db_info"].keys():
+    if app.lower() in _s["db_info"].keys():
         _s["c"].execute('UPDATE prio SET count=? WHERE app=?', (count, app))
     else:
         _s["c"].execute('INSERT INTO prio VALUES (?, ?)', (count, app))
@@ -193,7 +240,12 @@ def update_prio(choice):
 
 def run_app(choice):
     """ run selected command """
-    Popen(parse_exec(_s["apps"][choice]["exec"]).split())
+    app = _s["apps"][choice]
+    
+    if app["terminal"]:
+        Popen("{} {}".format(_s["term"], app["command"]).split())
+    else:
+        Popen(app["command"].split())
 
 def main(argv):
     init_session_data(argv)
