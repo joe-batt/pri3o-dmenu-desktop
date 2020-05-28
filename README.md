@@ -32,10 +32,16 @@ For Debian based distros use:
 apt install python3
 ```
 
+## Installing
+The easiest way to install is using `pip3`:
+```
+pip3 install pri3o_dmenu_desktop
+```
+
 ## Running
 Just run using
 ```
-./pri3o-dmenu-desktop [OPTIONS]
+pri3o-dmenu-desktop [OPTIONS]
 ```
 If run without parameters, will behave like `i3-dmenu-desktop` without parameters.
 The optional commandline parameters are:
@@ -48,15 +54,16 @@ The optional commandline parameters are:
 ## Speed
 As some people may wonder about how fast it is:
 ```
- % time pri3o-dmenu-desktop --dmenu=cat            
-pri3o-dmenu-desktop --dmenu=cat  0,05s user 0,01s system 99% cpu 0,054 total
+ % time pri3o-dmenu-desktop --dmenu=/bin/false
+pri3o-dmenu-desktop --dmenu=/bin/false  0,06s user 0,01s system 99% cpu 0,070 total
 
- % time i3-dmenu-desktop --dmenu=cat
-i3-dmenu-desktop --dmenu=cat  0,13s user 0,01s system 98% cpu 0,134 total
+ % time i3-dmenu-desktop --dmenu=/bin/false
+i3-dmenu-desktop --dmenu=/bin/false  0,11s user 0,01s system 99% cpu 0,114 total
 
- % time j4-dmenu-desktop --dmenu=cat
-j4-dmenu-desktop --dmenu=cat  0,09s user 0,02s system 33% cpu 0,339 total
+ % time j4-dmenu-desktop --dmenu=/bin/false
+j4-dmenu-desktop --dmenu=/bin/false  0,00s user 0,00s system 97% cpu 0,006 total
 ```
-On my system (SSD-only) it is slightly faster than even j4-dmenu-desktop, 
-maybe because I am still missing something. For all practical purposes the
-difference is negligible.
+On my system (SSD-only) it is slightly faster than `i3-dmenu-desktop`, but still
+much slower than `j4-dmenu-desktop`. For all practical purposes these
+differences should negligible unless you have a lot of applications and/or
+a slow hard drive.
