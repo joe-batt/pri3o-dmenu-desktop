@@ -1,0 +1,4 @@
+build
+dist
+pri3o_dmenu_desktop.egg-info
+*.pyc
