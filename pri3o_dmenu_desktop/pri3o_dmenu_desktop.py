@@ -99,7 +99,6 @@ class Pri3oDmenuDesktop:
         return ex
 
     def parse_desktop(self, content):
-        return None
         """ parse all entries of the [Desktop Entry] section into a dictionary.
             return None if first line in file is not [Desktop Entry] """
         data = {}
