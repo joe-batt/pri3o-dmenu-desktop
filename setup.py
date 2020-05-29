@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pri3o-dmenu-desktop", # Replace with your own username
-    version="0.1",
+    version="0.1.1",
     author="Johannes Battenberg",
     author_email="joe@chaoticneutral.eu",
     description="Drop-in replacement for i3-dmenu-desktop with simple app priorization ",
