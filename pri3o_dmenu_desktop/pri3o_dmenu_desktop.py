@@ -5,7 +5,6 @@
 # This script is meant as a drop in replacement for i3-menu-desktop but
 # includes simple priorization of applications via the absolute run count
 # of an application. The count is stored in a sqlite db.
-import os
 import sqlite3
 import glob
 import locale
@@ -15,13 +14,17 @@ import sys
 
 from subprocess import Popen, PIPE, STDOUT
 from pathlib import Path
+from os import environ
+from os.path import isdir, isfile, expanduser
 
 class Pri3oDmenuDesktop:
     def __init__(self):
+        self.home = environ["HOME"]
+        self.exec_flags = [re.compile(r'%[dDnNvm]'), re.compile(r'%[fFuUcik]')]
         # Session Data object, short name because of lazyness/readability
         self.get_config_base()
         self.ENTRY_TYPES = ["name", "command", "filename"]
-        self.db = self.config_base+'/dmenu.db'
+        self.db = f'{self.config_base}/dmenu.db'
         self.locale = locale.LC_CTYPE
         self.dmenu_cmd = 'dmenu -i'
         self.entry_type = 'name'
@@ -32,12 +35,12 @@ class Pri3oDmenuDesktop:
         """ get the base directory for config files, it uses
         $XDG_CONFIG_HOME/pri3o-dmenu-desktop and falls back to
         ~/.config/pri3o-dmenu-desktop """
-        if 'XDG_CONFIG_HOME' in os.environ:
-            self.config_base = os.environ['XDG_CONFIG_HOME']+"/pri3o-dmenu-desktop"
+        if 'XDG_CONFIG_HOME' in environ:
+            self.config_base = f'{environ["XDG_CONFIG_HOME"]}/pri3o-dmenu-desktop'
         else:
-            self.config_base = os.environ['HOME']+"/.config/pri3o-dmenu-desktop"
+            self.config_base = f'{self.home}/.config/pri3o-dmenu-desktop'
 
-        if not os.path.isdir(self.config_base):
+        if not isdir(self.config_base):
             Path(self.config_base).mkdir(parents=True, exist_ok=True)
 
     def show_help(self):
@@ -67,7 +70,7 @@ class Pri3oDmenuDesktop:
                 show_help()
                 exit()
             elif opt == '-d' or opt == '--database':
-                self.db = os.path.expanduser(arg)
+                self.db = expanduser(arg)
             elif opt == '-l' or opt == '--locale':
                 self.locale = arg
             elif opt == '-m' or opt == '--dmenu':
@@ -78,7 +81,7 @@ class Pri3oDmenuDesktop:
                 if arg in ENTRY_TYPES:
                     self.entry_type = arg
                 else:
-                    print("ERROR: invalid entry type: {}".format(arg))
+                    print(f"ERROR: invalid entry type: {arg}")
                     exit(1)
 
     def parse_exec(self, ex):
@@ -90,19 +93,19 @@ class Pri3oDmenuDesktop:
             ex = ex.strip("'")
 
         # Remove deprecated flags
-        ex = re.sub(r'%[dDnNvm]', '', ex)
+        ex = self.exec_flags[0].sub('', ex)
         # for now ignore all other flags as well
-        ex = re.sub(r'%[fFuUcik]', '', ex)
+        ex = self.exec_flags[1].sub('', ex)
         return ex
 
     def parse_desktop(self, content):
+        return None
         """ parse all entries of the [Desktop Entry] section into a dictionary.
             return None if first line in file is not [Desktop Entry] """
         data = {}
         # strip all lines, remove empty lines and comments
         content = list(map(lambda x: x.strip(), content))
-        content = list(filter(None, content))
-        content = list(filter(lambda x: not x.startswith("#"), content))
+        content = list(filter(lambda x: not (x == '' or x.startswith("#")), content))
         if content[0] != "[Desktop Entry]":
             return None
 
@@ -136,34 +139,34 @@ class Pri3oDmenuDesktop:
         self.lang = lang
 
         # generate key names from lang, use Name as fallback
-        lang_keys = ["Name[{}]".format(l) for l in lang]
+        lang_keys = [f"Name[{l}]" for l in lang]
         lang_keys.append("Name")
         self.lang_keys = lang_keys
 
     def get_search_dirs(self):
         """ build list of XDG directories to search """
         # get XDG dirs
-        if 'XDG_DATA_HOME' in os.environ:
-            xdg_data_home = os.environ['XDG_DATA_HOME']
+        if 'XDG_DATA_HOME' in environ:
+            xdg_data_home = environ['XDG_DATA_HOME']
         else:
-            xdg_data_home = os.environ['HOME']+"/.local/share"
+            xdg_data_home = f"{self.home}/.local/share"
 
-        if 'XDG_DATA_DIRS' in os.environ:
-            xdg_data_dirs = os.environ['XDG_DATA_DIRS']
+        if 'XDG_DATA_DIRS' in environ:
+            xdg_data_dirs = environ['XDG_DATA_DIRS']
         else:
             xdg_data_dirs = '/usr/local/share/:/usr/share/'
 
         # get app dirs, make sure the personal dir comes last as later entries
         # will overwrite existing ones for apps with identical names
-        searchdirs =[d+'/applications' for d in xdg_data_dirs.split(":")]
-        searchdirs.extend([xdg_data_home+'/applications'])
+        searchdirs =[f'{d}/applications' for d in xdg_data_dirs.split(":")]
+        searchdirs.extend([f'{xdg_data_home}/applications'])
         return searchdirs
 
     def get_desktop_list(self):
         """ generate a list of all .desktop files """
         searchdirs = self.get_search_dirs()
         # find all desktop files
-        files = [[f for f in glob.glob(d+"/*.desktop")] for d in searchdirs]
+        files = [[f for f in glob.glob(f"{d}/*.desktop")] for d in searchdirs]
         return [y for x in files for y in x]
 
     def is_visible(self, app_data):
@@ -238,16 +241,17 @@ class Pri3oDmenuDesktop:
     def run_app(self, choice):
         """ run selected command """
         app = self.apps[choice]
+        cmd = app["command"]
         
         if app["terminal"]:
-            Popen("{} {}".format(self.term, app["command"]).split())
+            Popen(f"{self.term} {app['command']}".split())
         else:
             Popen(app["command"].split())
 
     def main(self):
         self.gen_lang_strings()
         # create new db if it's not present
-        if not os.path.isfile(self.db):
+        if not isfile(self.db):
             init_db()
         # fetch all entries from DB
         self.conn_db()
