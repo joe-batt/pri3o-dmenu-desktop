@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="pri3o-dmenu-desktop", # Replace with your own username
+    name="pri3o_dmenu_desktop", # Replace with your own username
     version="0.1.1",
     author="Johannes Battenberg",
     author_email="joe@chaoticneutral.eu",
