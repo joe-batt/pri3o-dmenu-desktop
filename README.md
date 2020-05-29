@@ -1,7 +1,7 @@
 # pri3o-dmenu-desktop
 
 ## Description
-This is meant as a drop-in replacement for 
+**pri3o-dmenu-desktop** is a drop-in replacement for 
 [Michael Stapelberg](https://github.com/stapelberg)'s `i3-dmenu-desktop`
 that adds simple application priorization.
 It supports all options present in `i3-dmenu-desktop` and a few more.
