@@ -229,7 +229,7 @@ class Pri3oDmenuDesktop:
         """ update prio in db, add new entry if needed. Priority is lowered
             as this helps python's natural sort order."""
         count = self.apps[choice]["prio"][0]
-        app = self.apps[choice]["name"]
+        app = self.apps[choice]["name"].lower()
         count-=1
         if app.lower() in self.db_info.keys():
             self.c.execute('UPDATE prio SET count=? WHERE app=?', (count, app))
