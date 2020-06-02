@@ -65,5 +65,5 @@ j4-dmenu-desktop --dmenu=/bin/false  0,00s user 0,00s system 97% cpu 0,006 total
 ```
 On my system (SSD-only) it is slightly faster than `i3-dmenu-desktop`, but still
 much slower than `j4-dmenu-desktop`. For all practical purposes these
-differences should negligible unless you have a lot of applications and/or
+differences should be negligible unless you have a lot of applications and/or
 a slow hard drive.

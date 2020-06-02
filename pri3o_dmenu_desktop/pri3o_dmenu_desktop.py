@@ -67,7 +67,7 @@ class Pri3oDmenuDesktop:
                                    "entry-type=", "help", "locale=", "term="])
         for opt, arg in opts:
             if opt == '-h' or opt == "--help":
-                show_help()
+                self.show_help()
                 exit()
             elif opt == '-d' or opt == '--database':
                 self.db = expanduser(arg)
@@ -78,7 +78,7 @@ class Pri3oDmenuDesktop:
             elif opt == '-t' or opt == '--term':
                 self.term = arg
             elif opt == '-e' or opt == '--entry-type':
-                if arg in ENTRY_TYPES:
+                if arg in self.ENTRY_TYPES:
                     self.entry_type = arg
                 else:
                     print(f"ERROR: invalid entry type: {arg}")
@@ -125,7 +125,7 @@ class Pri3oDmenuDesktop:
 
     def init_db(self):
         # initialize new database
-        conn_db()
+        self.conn_db()
         self.c.execute('CREATE TABLE prio (count int, app text)')
         self.conn.commit()
         self.conn.close()
@@ -251,7 +251,7 @@ class Pri3oDmenuDesktop:
         self.gen_lang_strings()
         # create new db if it's not present
         if not isfile(self.db):
-            init_db()
+            self.init_db()
         # fetch all entries from DB
         self.conn_db()
         self.fetch_db_info()
