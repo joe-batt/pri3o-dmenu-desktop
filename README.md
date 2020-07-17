@@ -64,6 +64,22 @@ i3-dmenu-desktop --dmenu=/bin/false  0,11s user 0,01s system 99% cpu 0,114 total
 j4-dmenu-desktop --dmenu=/bin/false  0,00s user 0,00s system 97% cpu 0,006 total
 ```
 On my system (SSD-only) it is slightly faster than `i3-dmenu-desktop`, but still
-much slower than `j4-dmenu-desktop`. For all practical purposes these
+much slower than `j4-dmenu-desktop`. 
+For all practical purposes these
 differences should be negligible unless you have a lot of applications and/or
 a slow hard drive.
+
+For comparison I ran the tests on an old Lenovo T61 with HDD, where the delay
+is definitely noticable. These values are always for the second run (after the
+`.desktop` files where in RAM). For the first
+run you can add around 800ms on top.
+```
+ % time pri3o-dmenu-desktop --dmenu=/bin/false
+pri3o-dmenu-desktop --dmenu=/bin/false  0,13s user 0,02s system 99% cpu 0,154 total
+
+ % time i3-dmenu-desktop --dmenu=/bin/false
+i3-dmenu-desktop --dmenu=/bin/false  0,35s user 0,02s system 99% cpu 0,376 total
+
+ % time j4-dmenu-desktop --dmenu=/bin/false
+j4-dmenu-desktop --dmenu=/bin/false  0,00s user 0,01s system 96% cpu 0,011 total
+```
