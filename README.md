@@ -1,3 +1,5 @@
+*** Deprecation Warning: I switched to [Ulauncher](https://ulauncher.io/) and stopped using this. ***
+
 # pri3o-dmenu-desktop
 
 ## Description
